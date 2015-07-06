@@ -283,7 +283,7 @@ MBV.Tests = {
   // Must have only numbers, and phone formatting chars ().+- and spaces
   onlyPhoneFormattingChars: function(value, params) {
     if(typeof params != "object") params = {};
-    params.pattern = /\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}[\s]?(ext|Ext|DW|X|\/|内|\(内\)|内線|Poste)?[.]?[.\s]?\d{1,4}/;
+    params.pattern = /^\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}[\s]?(ext|Ext|DW|X|\/|内|\(内\)|内線|Poste)?[.]?[.\s]?\d{1,4}$/;
     return MBV.Tests.matchPattern(value, params);
   },
 
