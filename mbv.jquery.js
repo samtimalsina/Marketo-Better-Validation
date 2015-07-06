@@ -34,20 +34,21 @@ MBV.Messages = {
     required : "This field is required",
     selectRequired : "Please select a value for this field",
     emailInvalid : "Please enter a valid email address",
-    telephoneInvalid : "Please, enter a valid phone number",
+    phoneInvalid : "Please, enter a valid phone number",
     pleaseWait : "Please wait",
     nameInvalid: "Please, enter a valid name",
     postalInvalid: "Please, enter a valid postal code",
     noFreeEmail: "Please, enter a valid business email (no free email addresses)",
     noVulgarity: "No vulgarity please",
     submit: "Submit",
-    clear: "Clear"
+    clear: "Clear",
+    noYopMail: "This domain is not allowed",
   },
   French : {
     required : "Ce champ est requis",
     selectRequired : "SÃ©lectionnez une valeur pour ce champ",
     emailInvalid : "Entrez une adresse e-mail valide",
-    telephoneInvalid : "Entrez un numÃ©ro de tÃ©lÃ©phone valide",
+    phoneInvalid : "Entrez un numÃ©ro de tÃ©lÃ©phone valide",
     pleaseWait : "Veuillez patienter",
     nameInvalid: "Entrez SVP un nom valide",
     postalInvalid: "Entrez SVP un code postal valide",
@@ -60,7 +61,7 @@ MBV.Messages = {
     required : "Bitte fÃ¼llen Sie das Pflichtfeld aus",
     selectRequired : "Bitte wÃ¤hlen Sie einen Wert fÃ¼r dieses Feld aus",
     emailInvalid : "Bitte geben Sie eine gÃ¼ltige E-Mail-Adresse ein",
-    telephoneInvalid : "Bitte geben Sie eine gÃ¼ltige Telefonnummer ein",
+    phoneInvalid : "Bitte geben Sie eine gÃ¼ltige Telefonnummer ein",
     pleaseWait : "Bitte warten",
     nameInvalid: "Bitte geben Sie einen gÃ¼ltigen Namen ein",
     postalInvalid: "Bitte geben Sie eine gÃ¼ltige PLZ ein",
@@ -68,19 +69,6 @@ MBV.Messages = {
     noVulgarity: "Keine unsinnigen Angaben bitte",
     submit: "Absenden",
     clear: "Enterfernen"
-  },
-  Japanese : {
-    required : "å…¥åŠ›ã‚’å¿…è¦ã¨ã™ã‚‹é …ç›®ã§ã™ã€‚",
-    selectRequired : "é¸æŠžã‚’å¿…è¦ã¨ã™ã‚‹é …ç›®ã§ã™ã€‚",
-    emailInvalid : "ç¢ºå®Ÿã«é€£çµ¡ã®ã¨ã‚Œã‚‹ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’å…¥åŠ›ã—ã¦ãã ã•ã„ã€‚",
-    telephoneInvalid : "é›»è©±ç•ªå·ã‚’å…¥åŠ›ã—ã¦ä¸‹ã•ã„ã€‚",
-    pleaseWait : "ã—ã°ã‚‰ããŠå¾…ã¡ãã ã•ã„ã€‚",
-    nameInvalid: "æ­£å¼ãªåå‰ã‚’å…¥åŠ›ã—ã¦ä¸‹ã•ã„ã€‚",
-    postalInvalid: "æ­£ã—ã„éƒµä¾¿ç•ªå·ã‚’å…¥åŠ›ã—ã¦ä¸‹ã•ã„ã€‚",
-    noFreeEmail: "æ­£ã—ã„ãƒ¡ãƒ¼ãƒ«ã‚¢ãƒ‰ãƒ¬ã‚¹ã‚’å…¥åŠ›ã—ã¦ä¸‹ã•ã„ã€‚ï¼ˆYahooãªã©ã®ãƒ•ãƒªãƒ¼ãƒ¡ãƒ¼ãƒ«ã‚’ä½¿ç”¨ã—ã¦ã„ã‚‹å ´åˆç™»éŒ²ã§ããªã„å¯èƒ½æ€§ãŒã‚ã‚Šã¾ã™ã€‚ï¼‰",
-    noVulgarity: "ä¸ä½œæ³•ãªè¨€èªžã‚’ä½¿ç”¨ã—ãªã„ã§ä¸‹ã•ã„ã€‚",
-    submit: "ç”³è¾¼ã‚€",
-    clear: "ãƒªã‚»ãƒƒãƒˆ"
   }
 };
 
@@ -288,7 +276,7 @@ MBV.Tests = {
   // Must have only numbers, and phone formatting chars ().+- and spaces
   onlyPhoneFormattingChars: function(value, params) {
     if(typeof params != "object") params = {};
-    params.pattern = '^[0-9\(\)\.+ -]+$';
+    params.pattern = '^[0-9\(\)\.+ -(ext)]+$';
     return MBV.Tests.matchPattern(value, params);
   },
 
@@ -409,14 +397,12 @@ MBV.Validator = function() {
   self.validate = function(type, value, noresubmit) {
 
     if (!value) return false;
-    console.log(value);
     if(typeof MBV.Types[type] == 'undefined') {
       MBV.Debug("Type '"+type+"' is undefined");
       return true;
     }
     var tests = MBV.Types[type];
-    console.log(tests);
-    for(testname in tests)
+    for(var testname in tests)
     {
       var result = self.test(testname, value, tests[testname], noresubmit);
       if(result !== true) return result;
@@ -486,7 +472,7 @@ MBV.MarketoIntegration = function(form) {
 
   self.validateField = function(fieldElement) {
     var field = $(fieldElement);
-    self.validator.form = field.parents('form')[0];
+    self.validator.form = form;
     self.validator.submitForm = function() {
       if(!self.validator.form) return;
       // formSubmit is a Marketo supplied function
@@ -509,13 +495,13 @@ MBV.MarketoIntegration = function(form) {
         return self.setError(fieldElement, "This field is required");
       return true;
     }
-    return MBV.Mkto.validateField(fieldElement);
+    return;
+    //return MBV.Mkto.validateField(fieldElement);
   };
 
   self.setError = function(field, message) {
     console.log(message);
-    if(field instanceof jQuery) field = field[0];
-
+    // if(field instanceof jQuery) field = field[0];
     message = self.getTranslatedMessage(message);
 
     form.showErrorMessage(message, field);
@@ -554,6 +540,7 @@ MBV.MarketoIntegration = function(form) {
     if(field.is('.mktoEmailField')) return 'email';
     if(field.attr('name')===('Company')) return 'company';
     if(field.attr('name')==='PostalCode') return 'postalCode';
+    if(field.attr('name')==='Phone') return 'phone';
     if(field.attr('name')==='FirstName' || field.attr('name')==='LastName' || field.attr('name')==='Company') return 'name';
     return false;
   };
@@ -604,10 +591,11 @@ MBV.Init = function() {
         if(!controller.determineRequired(el)) return;
 
         var type = controller.determineType(el);
-        if(type === "email" || type === "postalCode") {
+        console.log(type);
+        if(type === "email" || type === "postalCode" || type === "phone") {
 
           var prevalidate = function() {
-            controller.validator.validate(type, el.val(), true);
+            controller.validateField(el);
           };
 
           el.blur(prevalidate);
@@ -631,4 +619,3 @@ MBV.Init = function() {
     });
   });
 }();
-
