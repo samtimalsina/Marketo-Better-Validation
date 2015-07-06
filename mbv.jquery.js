@@ -479,6 +479,7 @@ MBV.MarketoIntegration = function(form) {
   self.validator = new MBV.Validator();
 
   self.validateField = function(fieldElement) {
+    console.log(fieldElement.val());
     var field = $(fieldElement);
     self.validator.form = form;
     self.validator.submitForm = function() {
@@ -497,12 +498,12 @@ MBV.MarketoIntegration = function(form) {
     console.log('Type: ' + type + ', Value: ' + value);
     if(required && type) {
       var result = self.validator.validate(type, value);
+      console.log(result);
       if(typeof result == "string") {
-        console.log(result);
-        return self.setError(fieldElement, result);
+        return self.getTranslatedMessage(result);
       }
       if(!result) {
-        return self.setError(fieldElement, "This field is required");
+        return self.getTranslatedMessage("This field is required");
       }
       console.log("Suppoed to return true");
       return true;
@@ -514,7 +515,9 @@ MBV.MarketoIntegration = function(form) {
 
   self.setError = function(field, message) {
     message = self.getTranslatedMessage(message);
+    console.log(message);
     form.showErrorMessage(message, field);
+    return false;
   };
 
   self.getTranslatedMessage = function(message, lang, no_default) {
@@ -590,45 +593,44 @@ MBV.MarketoIntegration = function(form) {
 MBV.Init = function() {
   $(document).ready(function() {
     MktoForms2.whenReady(function (form) {
-      MBV.form = form;
       var controller = window._mbv = new MBV.MarketoIntegration(form);
-      // form.submitable(false);
       var formObj = form.getFormElem();
+      formObj.find('input').each(function(i, el) {
+        el = $(el);
+        if(!controller.determineRequired(el)) return;
+        var type = controller.determineType(el);
+        var prevalidate = function() {
+          var result = controller.validateField(el);
+          if (result !== true) {
+            form.showErrorMessage(result, el);
+            form.submittable(false);
+          }
+        };
+        if(type === "email" || type === "postalCode" || type === "phone") {
+          el.blur(prevalidate);
+        }
+      });
+
       form.onValidate(function() {
         form.submitable(false);
         var vals = form.vals();
-        for (var fieldElement in vals) {
-          var el =$('#' + fieldElement);
-          if(el.length == 0 || el === undefined) return;
+        formObj.find('input').each(function(i, el) {
+          el = $(el);
           if(!controller.determineRequired(el)) return;
-
           var type = controller.determineType(el);
           if(type === "email" || type === "postalCode" || type === "phone") {
-            // console.log(type);
-            controller.validateField(el);
-            // var prevalidate = function() {
-            //   controller.validateField(el);
-            // };
-
-            // el.blur(prevalidate);
-            // // el.click(prevalidate);
-            // if(type==="email") {
-            //   if(el.val().length) prevalidate;
-            // }
-
-            // if(type==="postalCode") {
-            //   var country = $(el.parents('form').get(0)).find('[name="country"],[name="Country"]');
-            //   if (country.length) {
-            //     country.blur(prevalidate);
-            //     if(el.val().length && country.val().length)
-            //       prevalidate();
-
-            //     if(alternate)
-            //       alternate.blur(prevalidate);
-            //   }
-            // }
+            var result = controller.validateField(el);
+            if (result !== true) {
+              console.log(result);
+              form.showErrorMessage(result, el);
+              form.submittable(false);
+              return false;
+            }
           }
-        }
+          // form.submit();
+          form.submittable(true);
+          return true;
+        });
       });
     });
   });
